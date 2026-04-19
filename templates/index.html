@@ -408,11 +408,16 @@
       const transLine  = (envio || frete)
         ? `<div class="order-transport">${envio}${frete}</div>`
         : '';
-      const rastreio   = p.codigo_rastreio
+      const isFM = (p.forma_envio || '').toLowerCase().includes('fm');
+      const rastreio = p.codigo_rastreio
         ? `<a class="rastreio-btn" href="${p.url_rastreio || '#'}" target="_blank" rel="noopener">
              🔍 ${p.codigo_rastreio}
            </a>`
-        : `<span class="no-rastreio">Sem código de rastreio</span>`;
+        : isFM
+          ? `<a class="rastreio-btn" href="https://rastreio.fmtransportes.com.br/" target="_blank" rel="noopener">
+               🔍 Rastrear FM Transportes
+             </a>`
+          : `<span class="no-rastreio">Sem código de rastreio</span>`;
       return `
         <div class="order-item">
           <div class="order-top">
