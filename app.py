@@ -1,5 +1,4 @@
 import os, ssl, json, urllib.request, urllib.parse
-from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -47,37 +46,20 @@ def buscar():
         return jsonify({"erro": "CPF inválido. Informe 11 dígitos."}), 400
 
     cpf_fmt = format_cpf(cpf_digits)
-    cutoff = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
-
-    # --- rastreio_pedidos: try digits then formatted CPF ---
-    pedidos = []
-    for cpf_val in [cpf_digits, cpf_fmt]:
-        try:
-            d = noco_get(T_RASTREIO, {
-                "where": f"(cpf_cliente,eq,{cpf_val})",
-                "limit": 200,
-                "sort": "-data_pedido",
-                "fields": "Id,id_venda_tiny,data_pedido,situacao,forma_envio,forma_frete,codigo_rastreio,url_rastreio",
-            })
-            if d.get("list"):
-                pedidos = d["list"]
-                break
-        except Exception:
-            pass
-
-    pedidos = [p for p in pedidos if (p.get("data_pedido") or "") >= cutoff]
 
     # --- guru_assinaturas ---
     assinatura = None
+    email_cliente = None
     try:
         d = noco_get(T_ASSINA, {
             "where": f"(doc,eq,{cpf_digits})",
             "limit": 1,
             "sort": "-started_at",
-            "fields": "last_status,next_cycle_at,cycle_end_date,started_at",
+            "fields": "last_status,next_cycle_at,cycle_end_date,started_at,email",
         })
         if d.get("list"):
             assinatura = d["list"][0]
+            email_cliente = assinatura.pop("email", None)
     except Exception:
         pass
 
@@ -88,12 +70,36 @@ def buscar():
             "where": f"(doc,eq,{cpf_digits})",
             "limit": 1,
             "sort": "-confirmed_at",
-            "fields": "oferta_nome,confirmed_at,status",
+            "fields": "oferta_nome,confirmed_at,status,email",
         })
         if d.get("list"):
             ultima_venda = d["list"][0]
+            if not email_cliente:
+                email_cliente = ultima_venda.pop("email", None)
+            else:
+                ultima_venda.pop("email", None)
     except Exception:
         pass
+
+    # --- rastreio_pedidos: try formatted CPF, then digits, then email ---
+    pedidos = []
+    search_vals = [("cpf_cliente", cpf_fmt), ("cpf_cliente", cpf_digits)]
+    if email_cliente:
+        search_vals.append(("email_cliente", email_cliente))
+
+    for field, val in search_vals:
+        try:
+            d = noco_get(T_RASTREIO, {
+                "where": f"({field},eq,{val})",
+                "limit": 50,
+                "sort": "-data_pedido",
+                "fields": "Id,id_venda_tiny,data_pedido,situacao,forma_envio,forma_frete,codigo_rastreio,url_rastreio",
+            })
+            if d.get("list"):
+                pedidos = d["list"]
+                break
+        except Exception:
+            pass
 
     return jsonify({
         "pedidos": pedidos,
