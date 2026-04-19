@@ -291,6 +291,20 @@
     }
   }
 
+  function cpfValido(digits) {
+    if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += +digits[i] * (10 - i);
+    let r = (sum * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    if (r !== +digits[9]) return false;
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += +digits[i] * (11 - i);
+    r = (sum * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    return r === +digits[10];
+  }
+
   function showMsg(text, type) {
     const el = document.getElementById('msg');
     el.textContent = text;
@@ -405,8 +419,9 @@
 
   async function buscar() {
     const cpf = cpfInput.value.trim();
-    if (cpf.replace(/\D/g, '').length !== 11) {
-      showMsg('Informe um CPF válido com 11 dígitos.', 'error');
+    const digits = cpf.replace(/\D/g, '');
+    if (!cpfValido(digits)) {
+      showMsg('CPF inválido. Verifique os números e tente novamente.', 'error');
       return;
     }
 
