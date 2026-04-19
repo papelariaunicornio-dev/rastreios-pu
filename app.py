@@ -97,7 +97,7 @@ def buscar():
                 "where": f"({field},eq,{val})",
                 "limit": 50,
                 "sort": "-data_pedido",
-                "fields": "Id,id_venda_tiny,data_pedido,dt_postagem,CreatedAt,forma_envio,forma_frete,codigo_rastreio,url_rastreio",
+                "fields": "Id,id_venda_tiny,numero_ecommerce,data_pedido,dt_postagem,CreatedAt,forma_envio,forma_frete,codigo_rastreio,url_rastreio",
             })
             if d.get("list"):
                 pedidos = d["list"]

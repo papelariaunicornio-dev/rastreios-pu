@@ -400,7 +400,7 @@
   function renderPedidos(pedidos, cutoff) {
     if (!pedidos.length) return '';
     const items = pedidos.map(p => {
-      const num        = p.id_venda_tiny || p.Id || '—';
+      const num        = p.numero_ecommerce || p.id_venda_tiny || p.Id || '—';
       const dataPedido = fmtDate(p.data_pedido);
       const dataEnvio  = fmtDate(p.dt_postagem || p.CreatedAt);
       const envio      = p.forma_envio ? `<span class="transport-badge">${p.forma_envio}</span>` : '';
