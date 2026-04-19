@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rastreamento de Pedidos — Papelaria Unicórnio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Assistant', sans-serif;
+      background: #f7f5fb;
+      color: #2d2d2d;
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #623DA6 0%, #7b52c0 100%);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 16px rgba(98, 61, 166, 0.3);
+    }
+    header img { height: 44px; object-fit: contain; }
+    header h1 {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Main layout ──────────────────────── */
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px 16px 64px;
+    }
+
+    /* ── Search card ──────────────────────── */
+    .search-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .search-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #623DA6;
+      margin-bottom: 8px;
+    }
+    .search-card p {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+    .input-row {
+      display: flex;
+      gap: 12px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 2px solid #e0d8f0;
+      border-radius: 16px;
+      font-family: 'Assistant', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-row input:focus { border-color: #623DA6; }
+    .input-row input::placeholder { color: #aaa; }
+    .btn-buscar {
+      padding: 14px 24px;
+      background: #623DA6;
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      font-family: 'Assistant', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-buscar:hover { background: #7b52c0; }
+    .btn-buscar:active { transform: scale(0.97); }
+    .btn-buscar:disabled { background: #b0a0d0; cursor: not-allowed; }
+
+    /* ── Status messages ──────────────────── */
+    .msg {
+      margin-top: 20px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .msg-error { background: #fdecea; color: #c0392b; }
+    .msg-empty { background: #f0f0f0; color: #666; }
+    .msg-loading { background: #f0ebff; color: #623DA6; }
+    .hidden { display: none; }
+
+    /* ── Results ──────────────────────────── */
+    #results { margin-top: 28px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Subscription card ────────────────── */
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #623DA6;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title span { font-size: 1.2rem; }
+
+    .assina-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .assina-item label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .assina-item .value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #2d2d2d;
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .badge-active   { background: #e6f9ef; color: #1a7a3e; }
+    .badge-trialing { background: #fff8e0; color: #b07a00; }
+    .badge-canceled { background: #fdecea; color: #c0392b; }
+    .badge-inactive { background: #f0f0f0; color: #777; }
+
+    /* ── Orders table ─────────────────────── */
+    .orders-table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    thead th {
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #999;
+      padding: 8px 12px;
+      border-bottom: 2px solid #f0e8ff;
+    }
+    tbody tr { border-bottom: 1px solid #f5f0fd; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 12px; vertical-align: middle; }
+    tbody tr:hover { background: #faf7ff; }
+
+    .order-num { font-weight: 700; color: #623DA6; }
+
+    .badge-situacao {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .sit-aberto     { background: #f0f0f0; color: #666; }
+    .sit-aprovado   { background: #fff8e0; color: #b07a00; }
+    .sit-enviado    { background: #e0f0ff; color: #1a5fa8; }
+    .sit-entregue   { background: #e6f9ef; color: #1a7a3e; }
+    .sit-cancelado  { background: #fdecea; color: #c0392b; }
+    .sit-default    { background: #f0f0f0; color: #555; }
+
+    .rastreio-link {
+      color: #623DA6;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .rastreio-link:hover { text-decoration: underline; }
+    .no-rastreio { color: #bbb; font-size: 0.85rem; }
+
+    /* ── Footer ───────────────────────────── */
+    footer {
+      background: #623DA6;
+      color: rgba(255,255,255,0.9);
+      text-align: center;
+      padding: 28px 16px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    footer a { color: #e8d9ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 560px) {
+      .input-row { flex-direction: column; }
+      header h1 { font-size: 1rem; }
+      .search-card { padding: 24px 16px; }
+      tbody td { padding: 10px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="https://papelariaunicornio.com.br/cdn/shop/files/logo.png?v=1703102166" alt="Papelaria Unicórnio" />
+  <h1>Rastreamento de Pedidos</h1>
+</header>
+
+<main>
+  <div class="search-card">
+    <h2>Consulte seus pedidos</h2>
+    <p>Informe seu CPF para ver o status dos envios e sua assinatura.</p>
+    <div class="input-row">
+      <input
+        type="text"
+        id="cpf-input"
+        placeholder="000.000.000-00"
+        maxlength="14"
+        inputmode="numeric"
+        autocomplete="off"
+      />
+      <button class="btn-buscar" id="btn-buscar" onclick="buscar()">Buscar</button>
+    </div>
+    <div id="msg" class="msg hidden"></div>
+  </div>
+
+  <div id="results"></div>
+</main>
+
+<footer>
+  <strong>Papelaria Unicórnio</strong><br />
+  Dúvidas? Fale conosco:<br />
+  <a href="https://wa.me/5527997025700">WhatsApp (27) 99702-5700</a> &nbsp;·&nbsp;
+  <a href="mailto:contato@papelariaunicornio.com.br">contato@papelariaunicornio.com.br</a>
+</footer>
+
+<script>
+  const cpfInput = document.getElementById('cpf-input');
+
+  cpfInput.addEventListener('input', () => {
+    let v = cpfInput.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9)      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+    cpfInput.value = v;
+  });
+
+  cpfInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') buscar();
+  });
+
+  function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = `msg msg-${type}`;
+  }
+
+  function hideMsg() {
+    document.getElementById('msg').className = 'msg hidden';
+  }
+
+  function fmtDate(str) {
+    if (!str) return '—';
+    const d = str.slice(0, 10).split('-');
+    return `${d[2]}/${d[1]}/${d[0]}`;
+  }
+
+  function situacaoBadge(sit) {
+    const s = (sit || '').toLowerCase();
+    let cls = 'sit-default';
+    let label = sit || '—';
+    if (s.includes('aberto'))    { cls = 'sit-aberto';   label = 'Aberto'; }
+    if (s.includes('aprovado') || s.includes('pago')) { cls = 'sit-aprovado'; label = 'Aprovado'; }
+    if (s.includes('enviado') || s.includes('transito') || s.includes('trânsito')) { cls = 'sit-enviado'; label = 'Enviado'; }
+    if (s.includes('entregue'))  { cls = 'sit-entregue'; label = 'Entregue'; }
+    if (s.includes('cancelado')) { cls = 'sit-cancelado'; label = 'Cancelado'; }
+    return `<span class="badge-situacao ${cls}">${label}</span>`;
+  }
+
+  function statusBadge(status) {
+    const map = {
+      active:   ['badge-active',   'Ativa'],
+      trialing: ['badge-trialing', 'Período de teste'],
+      canceled: ['badge-canceled', 'Cancelada'],
+      inactive: ['badge-inactive', 'Inativa'],
+    };
+    const [cls, label] = map[status] || ['badge-inactive', status || '—'];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function renderAssinatura(assina, venda) {
+    if (!assina && !venda) return '';
+    const plano        = venda?.oferta_nome || '—';
+    const status       = assina?.last_status || '—';
+    const proxPag      = fmtDate(assina?.next_cycle_at);
+    const ultPag       = fmtDate(venda?.confirmed_at);
+
+    return `
+      <div class="card">
+        <div class="card-title"><span>⭐</span> Minha Assinatura</div>
+        <div class="assina-grid">
+          <div class="assina-item">
+            <label>Plano</label>
+            <div class="value">${plano}</div>
+          </div>
+          <div class="assina-item">
+            <label>Status</label>
+            <div class="value">${statusBadge(status)}</div>
+          </div>
+          <div class="assina-item">
+            <label>Último pagamento</label>
+            <div class="value">${ultPag}</div>
+          </div>
+          <div class="assina-item">
+            <label>Próximo pagamento</label>
+            <div class="value">${proxPag}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderPedidos(pedidos) {
+    if (!pedidos.length) return '';
+    const rows = pedidos.map(p => {
+      const num       = p.id_venda_tiny || p.Id || '—';
+      const data      = fmtDate(p.data_pedido);
+      const sit       = situacaoBadge(p.situacao);
+      const transport = [p.forma_envio, p.forma_frete].filter(Boolean).join(' · ') || '—';
+      const rastreio  = p.codigo_rastreio
+        ? `<a class="rastreio-link" href="${p.url_rastreio || '#'}" target="_blank" rel="noopener">
+             ${p.codigo_rastreio} ↗
+           </a>`
+        : `<span class="no-rastreio">Sem rastreio</span>`;
+      return `<tr>
+        <td><span class="order-num">#${num}</span></td>
+        <td>${data}</td>
+        <td>${sit}</td>
+        <td>${transport}</td>
+        <td>${rastreio}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="card">
+        <div class="card-title"><span>📦</span> Pedidos (últimos 90 dias)</div>
+        <div class="orders-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Pedido</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Envio</th>
+                <th>Rastreio</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  async function buscar() {
+    const cpf = cpfInput.value.trim();
+    if (cpf.replace(/\D/g, '').length !== 11) {
+      showMsg('Informe um CPF válido com 11 dígitos.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btn-buscar');
+    btn.disabled = true;
+    showMsg('Buscando...', 'loading');
+    document.getElementById('results').innerHTML = '';
+
+    try {
+      const resp = await fetch('/api/buscar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf }),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        showMsg(data.erro || 'Erro ao buscar. Tente novamente.', 'error');
+        return;
+      }
+
+      hideMsg();
+      const { pedidos, assinatura, ultima_venda } = data;
+
+      if (!pedidos.length && !assinatura && !ultima_venda) {
+        showMsg('Nenhum pedido ou assinatura encontrado para este CPF.', 'empty');
+        return;
+      }
+
+      document.getElementById('results').innerHTML =
+        renderAssinatura(assinatura, ultima_venda) +
+        renderPedidos(pedidos);
+
+    } catch (e) {
+      showMsg('Erro de conexão. Tente novamente.', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
