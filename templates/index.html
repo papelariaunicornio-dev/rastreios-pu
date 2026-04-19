@@ -231,6 +231,11 @@
       align-self: flex-start;
     }
     .rastreio-btn:hover { background: #7b52c0; }
+    .rastreio-btn-soft {
+      background: #c4b0e8;
+      color: #fff;
+    }
+    .rastreio-btn-soft:hover { background: #b09fd8; }
     .no-rastreio { font-size: 0.82rem; color: #bbb; }
 
     /* ── Footer ───────────────────────────── */
@@ -253,6 +258,16 @@
     }
 
     /* ── Mobile tweaks ────────────────────── */
+    .disclaimer {
+      margin-top: 24px;
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .disclaimer a { color: #b09fd8; text-decoration: none; }
+    .disclaimer a:hover { text-decoration: underline; }
+
     @media (max-width: 480px) {
       header { padding: 14px 16px; gap: 12px; }
       header img { height: 32px; }
@@ -292,6 +307,11 @@
   </div>
 
   <div id="results"></div>
+
+  <p class="disclaimer">
+    Ainda estamos trabalhando para aprimorar esta plataforma. Pode ser que nem todos os pedidos ou rastreios apareçam aqui.
+    Qualquer dúvida, <a href="https://wa.me/5527999551978">entre em contato conosco</a>.
+  </p>
 </main>
 
 <footer>
@@ -414,7 +434,7 @@
              🔍 ${p.codigo_rastreio}
            </a>`
         : isFM
-          ? `<a class="rastreio-btn" href="https://rastreio.fmtransportes.com.br/" target="_blank" rel="noopener">
+          ? `<a class="rastreio-btn rastreio-btn-soft" href="https://rastreio.fmtransportes.com.br/" target="_blank" rel="noopener">
                🔍 Rastrear FM Transportes
              </a>`
           : `<span class="no-rastreio">Sem código de rastreio</span>`;
