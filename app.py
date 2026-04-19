@@ -1,4 +1,5 @@
 import os, ssl, json, urllib.request, urllib.parse
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -46,6 +47,9 @@ def buscar():
         return jsonify({"erro": "CPF inválido. Informe 11 dígitos."}), 400
 
     cpf_fmt = format_cpf(cpf_digits)
+    cutoff_dt = datetime.now() - timedelta(days=90)
+    cutoff    = cutoff_dt.strftime("%Y-%m-%d")
+    cutoff_br = cutoff_dt.strftime("%d/%m/%Y")
 
     # --- guru_assinaturas ---
     assinatura = None
@@ -101,10 +105,13 @@ def buscar():
         except Exception:
             pass
 
+    pedidos = [p for p in pedidos if (p.get("data_pedido") or "") >= cutoff]
+
     return jsonify({
         "pedidos": pedidos,
         "assinatura": assinatura,
         "ultima_venda": ultima_venda,
+        "cutoff_br": cutoff_br,
     })
 
 

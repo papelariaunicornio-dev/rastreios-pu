@@ -351,7 +351,7 @@
       </div>`;
   }
 
-  function renderPedidos(pedidos) {
+  function renderPedidos(pedidos, cutoff) {
     if (!pedidos.length) return '';
     const rows = pedidos.map(p => {
       const num       = p.id_venda_tiny || p.Id || '—';
@@ -374,7 +374,8 @@
 
     return `
       <div class="card">
-        <div class="card-title"><span>📦</span> Pedidos (últimos 90 dias)</div>
+        <div class="card-title"><span>📦</span> Pedidos enviados</div>
+        <p style="font-size:0.82rem;color:#999;margin:-8px 0 14px;">Exibindo pedidos a partir de ${cutoff}</p>
         <div class="orders-table-wrap">
           <table>
             <thead>
@@ -418,7 +419,7 @@
       }
 
       hideMsg();
-      const { pedidos, assinatura, ultima_venda } = data;
+      const { pedidos, assinatura, ultima_venda, cutoff_br } = data;
 
       if (!pedidos.length && !assinatura && !ultima_venda) {
         showMsg('Nenhum pedido ou assinatura encontrado para este CPF.', 'empty');
@@ -427,7 +428,7 @@
 
       document.getElementById('results').innerHTML =
         renderAssinatura(assinatura, ultima_venda) +
-        renderPedidos(pedidos);
+        renderPedidos(pedidos, cutoff_br);
 
     } catch (e) {
       showMsg('Erro de conexão. Tente novamente.', 'error');
