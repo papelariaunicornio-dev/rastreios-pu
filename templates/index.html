@@ -281,6 +281,16 @@
     if (e.key === 'Enter') buscar();
   });
 
+  // Auto-busca se CPF vier pela URL (?cpf=...)
+  const urlCpf = new URLSearchParams(window.location.search).get('cpf');
+  if (urlCpf) {
+    const digits = urlCpf.replace(/\D/g, '').slice(0, 11);
+    if (digits.length === 11) {
+      cpfInput.value = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      buscar();
+    }
+  }
+
   function showMsg(text, type) {
     const el = document.getElementById('msg');
     el.textContent = text;
